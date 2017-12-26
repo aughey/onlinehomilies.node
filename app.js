@@ -2,6 +2,7 @@ var express = require('express')
 var app = express()
 var AWS = require('aws-sdk');
 var Q = require('q');
+var Podcast = require('podcast')
 
 var bodyParser = require('body-parser')
 
@@ -15,11 +16,48 @@ app.use(express.static('public'));
 var mongo = require('mongodb')
 var MongoClient = mongo.MongoClient
 
+var baseurl='http://onlinehomilies.com/'
+
 Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) => {
     console.log("Connected to mongodb");
-    db.collection('sessions').createIndex({recording_titles:'text'}).then(() => {
-      console.log("Created indices for title");
+    //db.collection('sessions').createIndex({recording_titles:'text'}).then(() => {
+    //  console.log("Created indices for title");
+    //});
+
+    app.get('/podcast', function(req, res) {
+      var feed = new Podcast({
+        title: "Catholic Student Center at Washington University",
+	description: "Weekly homilies",
+	feed_url: baseurl + "/podcast",
+	site_url: "http://washucsc.org",
+	image_url: "http://www.washucsc.org/wp-content/uploads/2015/07/CSC-Logo-whiteFINAL.png",
+	author: "Catholic Student Center at Washington University"
+      });
+
+      var query = db.collection('sessions').find({}).sort({date: -1})
+      query.limit(10);
+      query.toArray().then((sessions) => {
+      sessions.forEach((s) => {
+        s.recordings.forEach((r) => {
+	  feed.item({
+	    title: r.title,
+	    description: s.title,
+	    url: baseurl +  'r/' + s._id,
+	    guid: r._id,
+	    date: s.date,
+	    itunesAuthor: r.speaker,
+	    enclosure: {
+	      url: baseurl + 'r/' + s._id
+	    }
+	  });
+	});
+      });
+      res.set('Content-Type','text/xml');
+      res.send(feed.xml(' '))
+      });
+
     });
+
     app.get('/sessions', function(req, res) {
     console.log(req.query);
         var query = null;

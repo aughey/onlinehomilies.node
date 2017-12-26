@@ -9,6 +9,8 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 	collection.dropIndex('title_text').catch(() => {});
 	collection.dropIndex('recording_titles_text').catch(() => {});
         return collection.remove({}).then(() => {
+          return collection.createIndex({recording_titles:'text'})
+	}).then(() => {
             var promises = [];
             var deferred = Q.defer();
             csv().fromFile('private3/' + t + '.csv')
