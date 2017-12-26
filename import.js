@@ -6,10 +6,12 @@ var tables = "sessions groups recordings".split(' ');
 Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) => {
     Q.all(tables.map((t) => {
         var collection = db.collection(t);
+	collection.dropIndex('title_text').catch(() => {});
+	collection.dropIndex('recording_titles_text').catch(() => {});
         return collection.remove({}).then(() => {
             var promises = [];
             var deferred = Q.defer();
-            csv().fromFile('private/' + t + '.csv')
+            csv().fromFile('private3/' + t + '.csv')
                 .on('json', (jsonObj) => {
                     if (jsonObj.date) {
                         jsonObj.date = new Date(jsonObj.date);
@@ -51,6 +53,8 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 		    r.youtube_url = 'http://www.youtube.com/embed/' + r.youtube_id;
 		  }
 		});
+		var titles = recordings.map((r) => r.title);
+		s.recording_titles = titles.join(' ');
                 return sessions.update({_id: s._id},s);
             }).then(() => {
                 console.log("Updated session id " + s._id);
@@ -63,9 +67,10 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
             });
         });
         return deferred.promise;
-
+    }).then(() => {
+       return db.collection('sessions').remove({group_id: {'$ne' : 1}});
     }).then(() => {
         console.log("Closing database");
         db.close();
-    });
+    }).done();
 });

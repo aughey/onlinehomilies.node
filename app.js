@@ -12,16 +12,66 @@ app.use(bodyParser.urlencoded({
 
 app.use(express.static('public'));
 
-var MongoClient = require('mongodb').MongoClient
+var mongo = require('mongodb')
+var MongoClient = mongo.MongoClient
 
 Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) => {
     console.log("Connected to mongodb");
+    db.collection('sessions').createIndex({recording_titles:'text'}).then(() => {
+      console.log("Created indices for title");
+    });
     app.get('/sessions', function(req, res) {
-        db.collection('sessions').find({}).sort({date: -1}).limit(5).toArray().then(data => {
-            res.send(data);
+    console.log(req.query);
+        var query = null;
+	var page = 1;
+	if(req.query.page) {
+	  page = parseInt(req.query.page);
+	}
+	if(page < 1) {
+	page = 1;
+	}
+        if(req.query.q && req.query.q !== "") {
+	  console.log("Doing text query: " + req.query.q);
+	  query = db.collection('sessions').find(
+	  {'$text' : {'$search' : req.query.q } },
+	  { score: {'$meta' : 'textScore'} }
+	  ).sort({date: -1})
+	  //).sort({score:{'$meta':'textScore'}})
+	} else if(req.query.id) {
+	  id = new mongo.ObjectID(req.query.id)
+          query = db.collection('sessions').find({_id: id})
+	} else {
+          query = db.collection('sessions').find({}).sort({date: -1})
+	}
+	if(req.query.limit) {
+	  var limit = parseInt(req.query.limit,10);
+	  if(limit > 10) {
+	    limit = 10;
+	  }
+	  if(limit < 1) {
+	    limit = 1;
+	  }
+	} else {
+  	  var limit = 10;
+	}
+	query.limit(limit);
+	query.skip((page-1) * limit);
+	var count = null
+	query.count().then((c) => {
+	  count = c;
+	  console.log("Count: " + c);
+	}).then(() => {
+          return query.toArray()
+	}).then(data => {
+            res.send({
+	    limit: limit,
+	    page: page,
+	    count: count,
+	    sessions: data
+	    });
         });
     })
-});
+}).done();
 
-app.listen(3000);
+app.listen(3001);
 console.log("Webserver Started");

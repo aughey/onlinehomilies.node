@@ -8,7 +8,7 @@ el: '#app',
     getPage: function(page) {
       var me = this;
       $.getJSON("/sessions", {page: page}).then(function(r) {
-        me.sessions = r;
+        me.sessions = r.sessions;
       });
     }
   }
