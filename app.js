@@ -16,6 +16,7 @@ app.use(express.static('public'));
 var mongo = require('mongodb')
 var MongoClient = mongo.MongoClient
 
+var baseurl='http://aughey.washucsc.org/'
 var baseurl='http://onlinehomilies.com/'
 
 Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) => {
@@ -27,11 +28,15 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
     app.get('/podcast', function(req, res) {
       var feed = new Podcast({
         title: "Catholic Student Center at Washington University",
-	description: "Weekly homilies",
-	feed_url: baseurl + "/podcast",
-	site_url: "http://washucsc.org",
-	image_url: "http://www.washucsc.org/wp-content/uploads/2015/07/CSC-Logo-whiteFINAL.png",
-	author: "Catholic Student Center at Washington University"
+	description: "Weekly Homilies",
+	feed_url: baseurl + "api/podcast",
+	site_url: baseurl,
+	language: 'en',
+	itunesOwner: { name: "John Aughey", email: 'jha@aughey.com' },
+	//image_url: "http://www.washucsc.org/wp-content/uploads/2015/07/CSC-Logo-whiteFINAL.png",
+	image_url: 'http://www.washucsc.org/wp-content/uploads/csc-house-2.jpg',
+	itunesCategory: [ { text: "Religion & Spirituality" } ],
+	itunesAuthor: "Catholic Student Center at Washington University"
       });
 
       var query = db.collection('sessions').find({}).sort({date: -1})
@@ -39,15 +44,18 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
       query.toArray().then((sessions) => {
       sessions.forEach((s) => {
         s.recordings.forEach((r) => {
+	  var url = 'http://s3.amazonaws.com/onlinehomilies_audios/' + r.youtube_id + ".mp3";
 	  feed.item({
 	    title: r.title,
 	    description: s.title,
-	    url: baseurl +  'r/' + s._id,
-	    guid: r._id,
+	    url: url,
+	    guid: r._id.toString(),
 	    date: s.date,
+	    itunesCategory: [ { text: "Religion & Spirituality" } ],
+	    categories: ['Spirituality','Religion & Spirituality','Christianity'],
 	    itunesAuthor: r.speaker,
 	    enclosure: {
-	      url: baseurl + 'r/' + s._id
+	      url: url
 	    }
 	  });
 	});
@@ -59,7 +67,7 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
     });
 
     app.get('/sessions', function(req, res) {
-    console.log(req.query);
+    //console.log(req.query);
         var query = null;
 	var page = 1;
 	if(req.query.page) {
@@ -69,7 +77,7 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 	page = 1;
 	}
         if(req.query.q && req.query.q !== "") {
-	  console.log("Doing text query: " + req.query.q);
+	  //console.log("Doing text query: " + req.query.q);
 	  query = db.collection('sessions').find(
 	  {'$text' : {'$search' : req.query.q } },
 	  { score: {'$meta' : 'textScore'} }
@@ -97,7 +105,7 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 	var count = null
 	query.count().then((c) => {
 	  count = c;
-	  console.log("Count: " + c);
+	  //console.log("Count: " + c);
 	}).then(() => {
           return query.toArray()
 	}).then(data => {
@@ -111,5 +119,5 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
     })
 }).done();
 
-app.listen(3001);
+app.listen(4001);
 console.log("Webserver Started");

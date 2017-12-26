@@ -13,6 +13,7 @@
     "body-parser": ">0.0.1",
     "csvtojson": ">0.0.1",
     "express": ">4.0.0",
+    "forever": "^0.15.3",
     "mongodb": ">0.0.1",
     "podcast": "^0.2.2",
     "q": ">0.0.1"
