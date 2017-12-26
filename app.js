@@ -17,7 +17,7 @@ var mongo = require('mongodb')
 var MongoClient = mongo.MongoClient
 
 var baseurl='http://aughey.washucsc.org/'
-var baseurl='http://onlinehomilies.com/'
+var baseurl='http://www.onlinehomilies.com/'
 
 Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) => {
     console.log("Connected to mongodb");
@@ -34,7 +34,7 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 	language: 'en',
 	itunesOwner: { name: "John Aughey", email: 'jha@aughey.com' },
 	//image_url: "http://www.washucsc.org/wp-content/uploads/2015/07/CSC-Logo-whiteFINAL.png",
-	image_url: 'http://www.washucsc.org/wp-content/uploads/csc-house-2.jpg',
+	image_url: baseurl + "csc-house.jpg",
 	itunesCategory: [ { text: "Religion & Spirituality" } ],
 	itunesAuthor: "Catholic Student Center at Washington University"
       });
