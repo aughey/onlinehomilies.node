@@ -42,13 +42,13 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
       query.limit(10);
       query.toArray().then((sessions) => {
       sessions.forEach((s) => {
-        s.recordings.forEach((r) => {
-	  var url = 'http://s3.amazonaws.com/onlinehomilies_audios/' + r.youtube_id + ".mp3";
+        return s.recordings.forEach((r) => {
+	  var url = 'http://s3.amazonaws.com/onlinehomilies_audios/' + r.oh_id + ".mp3";
 	  feed.item({
 	    title: r.title,
 	    description: s.title,
 	    url: url,
-	    guid: r._id.toString(),
+	    guid: r.oh_id.toString(),
 	    date: s.date,
 	    itunesCategory: [ { text: "Religion & Spirituality" } ],
 	    categories: ['Spirituality','Religion & Spirituality','Christianity'],
@@ -58,10 +58,10 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 	    }
 	  });
 	});
-      });
+      })
       res.set('Content-Type','text/xml');
       res.send(feed.xml(' '))
-      });
+      })
 
     }
     app.get('/podcast', dopodcast);
