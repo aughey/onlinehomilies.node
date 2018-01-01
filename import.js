@@ -1,4 +1,5 @@
 const csv = require('csvtojson');
+const uuid = require('uuid/v4')
 var MongoClient = require('mongodb').MongoClient
 var Q = require('q');
 var tables = "sessions groups recordings".split(' ');
@@ -53,6 +54,9 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 		recordings.forEach((r) => {
 		  if(r.youtube_id) {
 		    r.youtube_url = 'http://www.youtube.com/embed/' + r.youtube_id;
+		    r.oh_id = r.youtube_id
+		  } else {
+		    r.oh_id = 'sqliteid-' + r.sqlite_id
 		  }
 		});
 		var titles = recordings.map((r) => r.title);

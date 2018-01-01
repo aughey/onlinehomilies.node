@@ -11,8 +11,6 @@ app.use(bodyParser.urlencoded({
     extended: true
 })); // for parsing application/x-www-form-urlencoded
 
-app.use(express.static('public'));
-
 var mongo = require('mongodb')
 var MongoClient = mongo.MongoClient
 
@@ -25,7 +23,8 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
     //  console.log("Created indices for title");
     //});
 
-    app.get('/podcast', function(req, res) {
+    
+    function dopodcast(req, res) {
       var feed = new Podcast({
         title: "Catholic Student Center at Washington University",
 	description: "Weekly Homilies",
@@ -64,7 +63,9 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
       res.send(feed.xml(' '))
       });
 
-    });
+    }
+    app.get('/podcast', dopodcast);
+    app.get('/feed', dopodcast);
 
     app.get('/sessions', function(req, res) {
     //console.log(req.query);
@@ -119,5 +120,6 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
     })
 }).done();
 
-app.listen(4001);
+app.listen(4001, function() {
 console.log("Webserver Started");
+});
