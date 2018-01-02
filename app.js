@@ -110,6 +110,15 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 	}).then(() => {
           return query.toArray()
 	}).then(data => {
+	  // Go through the data and remove some fields
+	  data.forEach(d => {
+	    d.recordings.forEach(r => {
+	      delete r.raw_transcription
+	      //delete r.transcription
+	      delete r.meaning_topics
+	      delete r.video_stats
+	    })
+	  })
             res.send({
 	    limit: limit,
 	    page: page,
