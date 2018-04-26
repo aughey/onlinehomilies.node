@@ -79,14 +79,20 @@ Q.nfcall(MongoClient.connect, "mongodb://localhost/onlinehomilies").then((db) =>
 	}
         if(req.query.q && req.query.q !== "") {
 	  //console.log("Doing text query: " + req.query.q);
+	  var q = req.query.q
+	  if(q.indexOf('"') == -1) {
+  	    q = q.split(' ').map(v => ('"' + v.trim() + '"')).join(' ')
+	  }
 	  query = db.collection('sessions').find(
-	  {'$text' : {'$search' : req.query.q } },
+	  {'$text' : {'$search' : q } },
 	  { score: {'$meta' : 'textScore'} }
 	  ).sort({date: -1})
 	  //).sort({score:{'$meta':'textScore'}})
 	} else if(req.query.id) {
 	  id = new mongo.ObjectID(req.query.id)
           query = db.collection('sessions').find({_id: id})
+	} else if(req.query.old_session_id) {
+          query = db.collection('sessions').find({sqlite_id: parseInt(req.query.old_session_id)})
 	} else {
           query = db.collection('sessions').find({}).sort({date: -1})
 	}
